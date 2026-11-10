@@ -40,6 +40,8 @@ const envSchema = z.object({
   PARABANK_ALLOW_GLOBAL_RESET: booleanFlag,
   PARABANK_ALLOW_LOAN_WORKFLOW: booleanFlag,
   PARABANK_ALLOW_TRANSFER_WORKFLOW: booleanFlag,
+  PARABANK_ALLOW_API_DEPOSIT: booleanFlag,
+  PARABANK_API_DEPOSIT_ACCOUNT_ID: z.coerce.number().int().positive().optional(),
   WORKERS: z.coerce
     .number({ error: 'must be a number' })
     .int()
@@ -51,7 +53,13 @@ const envSchema = z.object({
   RUN_ID: z
     .string()
     .regex(/^[a-z0-9]{4,16}$/i, { error: 'must be 4-16 alphanumeric characters' }),
-});
+}).refine(
+  (value) => !value.PARABANK_ALLOW_API_DEPOSIT || value.PARABANK_API_DEPOSIT_ACCOUNT_ID !== undefined,
+  {
+    path: ['PARABANK_API_DEPOSIT_ACCOUNT_ID'],
+    error: 'is required when PARABANK_ALLOW_API_DEPOSIT is true',
+  },
+);
 
 export interface AppConfig {
   readonly baseUrl: string;
@@ -59,6 +67,8 @@ export interface AppConfig {
   readonly allowGlobalReset: boolean;
   readonly allowLoanWorkflow: boolean;
   readonly allowTransferWorkflow: boolean;
+  readonly allowApiDeposit: boolean;
+  readonly apiDepositAccountId?: number;
   readonly transferUsername?: string;
   readonly transferPassword?: string;
   readonly workers: number;
@@ -123,6 +133,8 @@ export function parseConfig(source: NodeJS.ProcessEnv): AppConfig {
     allowGlobalReset: env.PARABANK_ALLOW_GLOBAL_RESET,
     allowLoanWorkflow: env.PARABANK_ALLOW_LOAN_WORKFLOW,
     allowTransferWorkflow: env.PARABANK_ALLOW_TRANSFER_WORKFLOW,
+    allowApiDeposit: env.PARABANK_ALLOW_API_DEPOSIT,
+    apiDepositAccountId: env.PARABANK_API_DEPOSIT_ACCOUNT_ID,
     transferUsername: source.PARABANK_TRANSFER_USERNAME?.trim() || undefined,
     transferPassword: source.PARABANK_TRANSFER_PASSWORD || undefined,
     workers: env.WORKERS,

@@ -32,6 +32,9 @@ export const TransactionSchema = z.object({
   description: z.string(),
 });
 
+export const DepositResponseSchema = z.string().min(1);
+
 export type ParaBankCustomer = z.infer<typeof CustomerSchema>;
 export type ParaBankAccount = z.infer<typeof AccountSchema>;
 export type ParaBankTransaction = z.infer<typeof TransactionSchema>;
+export type ParaBankDepositResponse = z.infer<typeof DepositResponseSchema>;

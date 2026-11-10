@@ -11,6 +11,8 @@ test.describe('parseConfig', () => {
     expect(parsed.allowGlobalReset).toBe(false);
     expect(parsed.allowLoanWorkflow).toBe(false);
     expect(parsed.allowTransferWorkflow).toBe(false);
+    expect(parsed.allowApiDeposit).toBe(false);
+    expect(parsed.apiDepositAccountId).toBeUndefined();
     expect(parsed.workers).toBe(2);
     expect(parsed.logLevel).toBe('info');
     expect(parsed.runId).toBe('abc123');
@@ -46,6 +48,19 @@ test.describe('parseConfig', () => {
     expect(parsed.allowTransferWorkflow).toBe(true);
     expect(parsed.transferUsername).toBe('authorized-user');
     expect(parsed.transferPassword).toBe('secret-password');
+  });
+
+  test('requires an explicitly allowlisted account for API deposits', () => {
+    expect(() => parseConfig({ ...baseEnv, PARABANK_ALLOW_API_DEPOSIT: 'true' })).toThrow(
+      /PARABANK_API_DEPOSIT_ACCOUNT_ID/,
+    );
+    const parsed = parseConfig({
+      ...baseEnv,
+      PARABANK_ALLOW_API_DEPOSIT: 'true',
+      PARABANK_API_DEPOSIT_ACCOUNT_ID: '12345',
+    });
+    expect(parsed.allowApiDeposit).toBe(true);
+    expect(parsed.apiDepositAccountId).toBe(12345);
   });
 
   test('uses automatic registration by default', () => {

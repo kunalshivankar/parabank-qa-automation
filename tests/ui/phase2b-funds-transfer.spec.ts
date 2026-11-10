@@ -3,7 +3,7 @@ import { AccountDetailsPage } from '../../pages/accountDetailsPage';
 import { FindTransactionsPage } from '../../pages/findTransactionsPage';
 import { LoginPage } from '../../pages/loginPage';
 import { TransferFundsPage } from '../../pages/transferFundsPage';
-import { formatCents, parseCurrencyToCents, sumCents } from '../../utils/money';
+import { parseCurrencyToCents, sumCents } from '../../utils/money';
 
 const TRANSFERS = ['$150.00', '$25.50', '$8.99'] as const;
 
@@ -63,14 +63,32 @@ test.describe('Phase 2B - funds transfer and transaction validation', () => {
     expect(sourceAfter.balanceCents).toBe(sourceBefore.balanceCents - expectedTransferredCents);
     expect(destinationAfter.balanceCents).toBe(destinationBefore.balanceCents + expectedTransferredCents);
 
-    const transactions = await new FindTransactionsPage(page).searchByAmount(sourceAccountId, formatCents(expectedTransferredCents));
-    const matchingTransfers = transactions.filter(
-      (transaction) => transaction.type.toLowerCase().includes('debit') || transaction.description.toLowerCase().includes('transfer'),
+    const transactionSearch = new FindTransactionsPage(page);
+    const transactionGroups = [];
+    for (const amount of TRANSFERS) {
+      transactionGroups.push(await transactionSearch.searchByAmount(sourceAccountId, amount));
+    }
+    const matchingTransfers = new Map(
+      transactionGroups
+        .flat()
+        .filter(
+          (transaction) =>
+            transaction.type.toLowerCase().includes('debit') || transaction.description.toLowerCase().includes('transfer'),
+        )
+        .map((transaction) => [transaction.transactionId, transaction]),
     );
-    expect(matchingTransfers.length).toBeGreaterThanOrEqual(TRANSFERS.length);
-    expect(sumCents(matchingTransfers.slice(0, TRANSFERS.length).map((transaction) => Math.abs(transaction.amountCents)))).toBe(
-      expectedTransferredCents,
-    );
+    const reconciledAmounts = TRANSFERS.map((amount) => {
+      const expectedCents = parseCurrencyToCents(amount);
+      const transaction = [...matchingTransfers.values()].find(
+        (candidate) => Math.abs(candidate.amountCents) === expectedCents,
+      );
+      expect(transaction, `Transaction history should contain the ${amount} transfer.`).toBeDefined();
+      if (transaction === undefined) {
+        throw new Error(`Transaction history did not contain the ${amount} transfer.`);
+      }
+      return Math.abs(transaction.amountCents);
+    });
+    expect(sumCents(reconciledAmounts)).toBe(expectedTransferredCents);
   });
 
   test('validates empty transfer amount through the application UI', async ({ page, appConfig }, testInfo) => {

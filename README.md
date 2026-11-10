@@ -142,7 +142,7 @@ Safe read-only API validation uses the documented public `john/demo` sample acco
 
 ## Phase 2C: ParaBank API automation
 
-Phase 2C is implemented with a reusable `ParaBankApiClient` and XML response parsing for the documented API endpoints. The suite validates the safe, read-only contract for:
+Phase 2C has a reusable `ParaBankApiClient` and XML response parsing for documented API endpoints. The current API test suite validates the safe, read-only contract for:
 
 - `GET /services/bank/login/{username}/{password}`
 - `GET /services/bank/customers/{customerId}/accounts`
@@ -151,6 +151,8 @@ Phase 2C is implemented with a reusable `ParaBankApiClient` and XML response par
 - `GET /services/bank/accounts/{accountId}/transactions/amount/{amount}`
 
 The API layer uses Zod schemas to validate customer, account, and transaction payloads and it asserts that invalid credentials fail closed without modifying shared state.
+
+The OpenAPI contract does not define a customer-create or registration operation. It does define `POST /services/bank/deposit`, which is available in the client only when `PARABANK_ALLOW_API_DEPOSIT=true` and `PARABANK_API_DEPOSIT_ACCOUNT_ID` matches the exact account being changed. Both configuration values are disabled/unset by default. The deposit method is covered with stubbed offline tests only; no live deposit was authorized or executed. Therefore the required API sequence of creating a user, depositing funds, and validating that user's transaction history remains incomplete.
 
 ### Verified local execution results
 

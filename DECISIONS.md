@@ -22,10 +22,11 @@ authorized account is provided.
 
 ## Phase 2C: API contract validation
 
-Phase 2C uses the documented ParaBank OpenAPI public endpoints and a reusable API client that validates the XML responses
-with Zod schemas. The API layer is intentionally read-only and uses the public `john/demo` credentials from the documented
-examples. The tests verify customer lookup, customer-account retrieval, account metadata, transaction history, and amount-based
-search consistency without calling any reset or write operation.
+The API test project uses documented ParaBank OpenAPI reads and a reusable client that validates customer, account, and
+transaction XML with Zod schemas. The assessment also requires deposits, so the client exposes the documented `POST /deposit`
+behind `PARABANK_ALLOW_API_DEPOSIT=true` and an exact `PARABANK_API_DEPOSIT_ACCOUNT_ID` allowlist. The flag defaults to false;
+tests use a stub and no real deposit has been made. The OpenAPI defines no customer-create/register operation, so the required
+create-user/deposit/history sequence cannot be fulfilled using documented REST endpoints alone.
 
 ## Phase 3: safe reporting and security guardrails
 
@@ -33,7 +34,7 @@ The final assessment documentation and report delivery remain intentionally cons
 sandbox safe by default:
 
 - no `cleanDB` or `initializeDB` calls are made in the automated workflow
-- no write operations are executed without an explicit, authorized environment and account
+- no write operations are executed without an explicit, authorized environment and exact account allowlist
 - raw traces and videos remain off unless `PARABANK_RETAIN_RAW_ARTIFACTS=true` is used in a private, approved context
 - credentials are not committed; `.env` is ignored and `.env.example` is the template source
 - the HTML report is generated from actual execution and remains the canonical evidence artifact for the run
@@ -45,11 +46,12 @@ by default because they can contain request payloads. No live account credential
 
 ## Local execution results (2026-11-10)
 
-The latest report-producing run selected only safe unit, reporter UI, and read-only API projects and retained the project-configured HTML reporter:
+The latest report-producing run retained the project-configured HTML reporter, selected all safe unit/reporter/API and UI tests, and explicitly excluded only the live Phase 2A registration/loan cases:
 
-- `npx playwright test --project=unit --project=reporter-ui --project=api` → 118 total, 118 passed, 0 failed, 0 skipped (16.1 seconds in the HTML report)
-- Breakdown: 103 unit, 11 reporter UI, and 4 API tests.
-- `npm run typecheck` and `npm run lint` → success in prior final verification.
-- The separate safe Phase 2B gate run with transfer and reset authorization disabled → 2 skipped.
+- Latest report: 128 test records, 125 passed, 0 failed, 3 skipped (20.1 seconds); skip count is reported separately from passes.
+- Breakdown: 107 unit, 11 reporter UI, 4 read-only API, and 3 offline UI passed; reset and 2 live transfer cases skipped with authorization disabled.
+- `npm run typecheck` and `npm run lint` → success after the final code changes.
+- Offline API deposit guard: 3 unit tests passed; the API request was stubbed and no deposit was sent.
+- Latest live Phase 2A attempt: 3 distinct registration submissions, each HTTP 200 with the duplicate-username message; login/account/loan were not reached.
 
-The HTML report is ignored by Git because it is generated evidence and may contain runtime data. Its current local copy is the canonical result for the run above. The live Phase 2A registration path remains blocked by duplicate-username responses; the live Phase 2B write path remains blocked until an authorized account and credentials are supplied. No destructive reset or financial transaction was performed.
+The HTML report is ignored by Git because it is generated evidence and may contain runtime data. Its current local copy is the canonical result for the run above. Scenario B live execution remains blocked until an authorized account is supplied. Scenario C remains incomplete because no documented API user-creation operation exists and no account is authorized for a live deposit. No destructive reset or financial transaction was performed.

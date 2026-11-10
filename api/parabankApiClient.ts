@@ -4,11 +4,14 @@ import type { AppConfig } from '../config/env';
 import {
   AccountSchema,
   CustomerSchema,
+  DepositResponseSchema,
   TransactionSchema,
   type ParaBankAccount,
   type ParaBankCustomer,
+  type ParaBankDepositResponse,
   type ParaBankTransaction,
 } from '../types/api';
+import { formatCents } from '../utils/money';
 
 function decodeXmlEntities(value: string): string {
   return value
@@ -106,6 +109,27 @@ export class ParaBankApiClient {
     const xml = await response.text();
     const rawAccount = parseXmlObject(xml, 'account');
     return AccountSchema.parse(rawAccount);
+  }
+
+  async deposit(accountId: number, amountCents: number): Promise<ParaBankDepositResponse> {
+    if (!this.appConfig.allowApiDeposit || this.appConfig.apiDepositAccountId !== accountId) {
+      throw new Error('ParaBank API deposits require explicit authorization for this exact account ID.');
+    }
+    if (!Number.isSafeInteger(accountId) || accountId <= 0) {
+      throw new Error('ParaBank API deposit account ID must be a positive safe integer.');
+    }
+    if (!Number.isSafeInteger(amountCents) || amountCents <= 0) {
+      throw new Error('ParaBank API deposit amount must be a positive safe integer number of cents.');
+    }
+
+    const response = await this.request.post(this.buildUrl('deposit'), {
+      params: { accountId, amount: formatCents(amountCents).slice(1) },
+      headers: { Accept: 'application/xml' },
+    });
+    if (!response.ok()) {
+      throw new Error(`ParaBank deposit failed with HTTP ${response.status()}.`);
+    }
+    return DepositResponseSchema.parse(await response.text());
   }
 
   async getTransactions(accountId: number): Promise<ParaBankTransaction[]> {
