@@ -44,11 +44,11 @@ sandbox safe by default:
 The custom reporter and logger redact credentials and sensitive fields. Raw Playwright videos and traces are disabled
 by default because they can contain request payloads. No live account credentials or raw artifacts are committed.
 
-## Local execution results (2026-11-10)
+## Local execution results (2026-11-11)
 
 The latest report-producing run retained the project-configured HTML reporter, selected all safe unit/reporter/API and UI tests, and explicitly excluded only the live Phase 2A registration/loan cases:
 
-- Latest report: 128 test records, 125 passed, 0 failed, 3 skipped (20.1 seconds); skip count is reported separately from passes.
+- Latest report: 128 test records, 125 passed, 0 failed, 3 skipped (23.8 seconds); skip count is reported separately from passes.
 - Breakdown: 107 unit, 11 reporter UI, 4 read-only API, and 3 offline UI passed; reset and 2 live transfer cases skipped with authorization disabled.
 - `npm run typecheck` and `npm run lint` → success after the final code changes.
 - Offline API deposit guard: 3 unit tests passed; the API request was stubbed and no deposit was sent.

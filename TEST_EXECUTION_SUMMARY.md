@@ -2,11 +2,11 @@
 
 ## Latest HTML report run
 
-- Date: 2026-11-10
+- Date: 2026-11-11
 - Command: `npx playwright test --project=unit --project=reporter-ui --project=api --project=ui --grep-invert "automatic registration, login, and checking account workflow|manual registration, login, and checking account workflow|loan workflow uses the existing authorized provider only"`
 - Reporter: project-configured custom reporter from `playwright.config.ts` (no CLI reporter override)
 - Report: `reports/parabank-report.html`
-- Duration recorded by report: 20.1 seconds
+- Duration recorded by report: 23.8 seconds
 - Result recorded by report: **128 total; 125 passed; 0 failed; 3 skipped; 100% pass rate among executed tests**
 
 | Project | Tests | Result |
