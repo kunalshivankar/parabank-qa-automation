@@ -10,6 +10,7 @@ test.describe('parseConfig', () => {
     expect(parsed.parabankUrl).toBe('https://parabank.parasoft.com/parabank/');
     expect(parsed.allowGlobalReset).toBe(false);
     expect(parsed.allowLoanWorkflow).toBe(false);
+    expect(parsed.allowTransferWorkflow).toBe(false);
     expect(parsed.workers).toBe(2);
     expect(parsed.logLevel).toBe('info');
     expect(parsed.runId).toBe('abc123');
@@ -33,6 +34,18 @@ test.describe('parseConfig', () => {
 
   test('accepts an explicit opt-in for the loan workflow', () => {
     expect(parseConfig({ ...baseEnv, PARABANK_ALLOW_LOAN_WORKFLOW: 'true' }).allowLoanWorkflow).toBe(true);
+  });
+
+  test('accepts an explicit opt-in for transfer workflow without inventing credentials', () => {
+    const parsed = parseConfig({
+      ...baseEnv,
+      PARABANK_ALLOW_TRANSFER_WORKFLOW: 'true',
+      PARABANK_TRANSFER_USERNAME: 'authorized-user',
+      PARABANK_TRANSFER_PASSWORD: 'secret-password',
+    });
+    expect(parsed.allowTransferWorkflow).toBe(true);
+    expect(parsed.transferUsername).toBe('authorized-user');
+    expect(parsed.transferPassword).toBe('secret-password');
   });
 
   test('uses automatic registration by default', () => {

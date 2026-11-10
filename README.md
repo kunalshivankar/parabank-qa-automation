@@ -2,9 +2,8 @@
 
 Playwright + TypeScript automation framework for [ParaBank](https://parabank.parasoft.com).
 
-> Status: **Phase 1 reporting and Phase 2A implementation**. Phase 2A business workflows do not require a reset; the
-> destructive reset setup remains explicitly gated because the public
-> ParaBank database is shared. Phase 2B, Phase 2C, and Phase 3 remain out of scope.
+> Status: **Phase 1 reporting, Phase 2A implementation, Phase 2B coverage, and Phase 2C API automation are in place**. The public sandbox remains
+> protected by explicit guardrails: no reset or write path is exercised without authorization. Phase 3 remains documentation and decision tracking only.
 
 ## Requirements
 
@@ -35,8 +34,8 @@ ParaBank's public instance is shared. The database reset (`cleanDB` / `initializ
 | `npm run lint` | ESLint, including the ban on `waitForTimeout` and `setTimeout` | no | no |
 | `npm run test:unit` | Unit tests for money parsing, config, data factory, redaction, reporter | no | no |
 | `npm run test:reporter` | Verifies the report's glass styling and accent colour via computed styles | no | yes (Chromium) |
-| `npm run test:ui` | Phase 2A registration/checking workflow plus read-only provider inspection; loan/reset tests are separately gated | yes | yes |
-| `npm run test:api` | Reserved for Phase 2C | yes | no |
+| `npm run test:ui` | Phase 2A registration/checking workflow plus gated Phase 2B transfer coverage and read-only provider inspection | yes | yes |
+| `npm run test:api` | Public, documented ParaBank API reads for customer/account/transaction validation | yes | no |
 | `npm run report:open` | Opens `reports/parabank-report.html` in your default browser | no | no |
 
 Every Playwright run writes the custom HTML report to `reports/parabank-report.html`.
@@ -103,6 +102,63 @@ Sensitive registration fields, including usernames, are redacted by the logger a
 
 The blocker evidence was inspected from the server response HTML and the local Playwright trace. Raw traces were not
 shared or committed because they contain request payloads; the current default keeps video and trace capture disabled.
+
+## Phase 2B: funds transfer and transaction validation
+
+Phase 2B uses the existing Page Object Model and integer-cent money utilities. It covers the required `$150.00`,
+`$25.50`, and `$8.99` transfers, source/destination account selection, confirmation text, balance reconciliation,
+and transaction-history parsing. The transfer workflow also includes an empty-amount validation path for authorized
+execution.
+
+Transfers mutate account balances and are therefore disabled by default. To run them, use an explicitly authorized
+test account and environment:
+
+```bash
+PARABANK_ALLOW_TRANSFER_WORKFLOW=true npm.cmd run test:ui -- tests/ui/phase2b-funds-transfer.spec.ts
+```
+
+Required private environment values are `PARABANK_TRANSFER_USERNAME` and `PARABANK_TRANSFER_PASSWORD`. Credentials
+must never be hardcoded, logged, or committed. No database reset, initialization, or global setting change is used.
+
+Current Phase 2B status:
+
+- **PASS:** Phase 2B page objects, integer-cent calculation reuse, authorization gate, and safe blocked-path tests.
+- **BLOCKED:** Live transfer execution is not authorized in this workspace and no transfer credentials were supplied.
+- **NOT VERIFIED:** Actual transfers, account balance changes, transaction history, and application-specific empty/invalid
+  account responses.
+
+### Verified local execution results
+
+The following checks were executed in the current workspace state:
+
+- `npx playwright test --project=unit --reporter=line` → `103 passed (3.6s)`
+- `npx playwright test --project=reporter-ui --reporter=line` → `11 passed` in the browser validation suite
+- `npx playwright test --project=ui tests/ui/phase2b-funds-transfer.spec.ts --reporter=line` with
+  `PARABANK_ALLOW_TRANSFER_WORKFLOW=false` and `PARABANK_ALLOW_GLOBAL_RESET=false` → `2 skipped` (safe blocked result)
+
+Safe read-only API validation uses the documented public `john/demo` sample account and the ParaBank OpenAPI contract. The live transaction list is validated only through documented GET endpoints; no write or reset calls are made. Phase 3 remains documentation and decision tracking only.
+
+## Phase 2C: ParaBank API automation
+
+Phase 2C is implemented with a reusable `ParaBankApiClient` and XML response parsing for the documented API endpoints. The suite validates the safe, read-only contract for:
+
+- `GET /services/bank/login/{username}/{password}`
+- `GET /services/bank/customers/{customerId}/accounts`
+- `GET /services/bank/accounts/{accountId}`
+- `GET /services/bank/accounts/{accountId}/transactions`
+- `GET /services/bank/accounts/{accountId}/transactions/amount/{amount}`
+
+The API layer uses Zod schemas to validate customer, account, and transaction payloads and it asserts that invalid credentials fail closed without modifying shared state.
+
+### Verified local execution results
+
+- `npx playwright test --project=api --reporter=line` → `4 passed (4.4s)`
+- `npm run typecheck` → success
+- `npm run lint` → success
+
+## Phase 3: engineering decisions and final audit
+
+Phase 3 documentation is intentionally limited to the authoritative guidance needed for the assessment: safe-sandbox guardrails, credential handling, report retention, and the documented blocked-path rationale when an environment is not explicitly authorized.
 
 ## Troubleshooting
 

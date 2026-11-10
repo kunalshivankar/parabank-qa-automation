@@ -39,6 +39,7 @@ const envSchema = z.object({
     .transform((value) => value.replace(/\/+$/, '')),
   PARABANK_ALLOW_GLOBAL_RESET: booleanFlag,
   PARABANK_ALLOW_LOAN_WORKFLOW: booleanFlag,
+  PARABANK_ALLOW_TRANSFER_WORKFLOW: booleanFlag,
   WORKERS: z.coerce
     .number({ error: 'must be a number' })
     .int()
@@ -57,6 +58,9 @@ export interface AppConfig {
   readonly parabankUrl: string;
   readonly allowGlobalReset: boolean;
   readonly allowLoanWorkflow: boolean;
+  readonly allowTransferWorkflow: boolean;
+  readonly transferUsername?: string;
+  readonly transferPassword?: string;
   readonly workers: number;
   readonly logLevel: LogLevel;
   readonly runId: string;
@@ -118,6 +122,9 @@ export function parseConfig(source: NodeJS.ProcessEnv): AppConfig {
     parabankUrl: `${env.PARABANK_BASE_URL}/parabank/`,
     allowGlobalReset: env.PARABANK_ALLOW_GLOBAL_RESET,
     allowLoanWorkflow: env.PARABANK_ALLOW_LOAN_WORKFLOW,
+    allowTransferWorkflow: env.PARABANK_ALLOW_TRANSFER_WORKFLOW,
+    transferUsername: source.PARABANK_TRANSFER_USERNAME?.trim() || undefined,
+    transferPassword: source.PARABANK_TRANSFER_PASSWORD || undefined,
     workers: env.WORKERS,
     logLevel: env.LOG_LEVEL,
     runId: env.RUN_ID,
