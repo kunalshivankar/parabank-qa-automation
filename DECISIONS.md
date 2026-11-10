@@ -45,15 +45,11 @@ by default because they can contain request payloads. No live account credential
 
 ## Local execution results (2026-11-10)
 
-The workspace was validation-tested with the project’s safe defaults and the current repository state:
+The latest report-producing run selected only safe unit, reporter UI, and read-only API projects and retained the project-configured HTML reporter:
 
-- `npm run typecheck` → success
-- `npm run lint` → success
-- `npx playwright test --project=unit --reporter=line` → `103 passed (2.6s)`
-- `npx playwright test --project=reporter-ui --reporter=line` → browser reporter checks completed without failures
-- `npx playwright test --project=api --reporter=line` → `4 passed (4.4s)`
-- `npx playwright test --project=ui tests/ui/phase2b-funds-transfer.spec.ts --reporter=line` with
-  `PARABANK_ALLOW_TRANSFER_WORKFLOW=false` and `PARABANK_ALLOW_GLOBAL_RESET=false` → `2 skipped`
+- `npx playwright test --project=unit --project=reporter-ui --project=api` → 118 total, 118 passed, 0 failed, 0 skipped (16.1 seconds in the HTML report)
+- Breakdown: 103 unit, 11 reporter UI, and 4 API tests.
+- `npm run typecheck` and `npm run lint` → success in prior final verification.
+- The separate safe Phase 2B gate run with transfer and reset authorization disabled → 2 skipped.
 
-This records the correct assessment status: the public API and the guarded UI paths are verified, and the live write path
-remains blocked until an explicitly authorized account and credentials are supplied.
+The HTML report is ignored by Git because it is generated evidence and may contain runtime data. Its current local copy is the canonical result for the run above. The live Phase 2A registration path remains blocked by duplicate-username responses; the live Phase 2B write path remains blocked until an authorized account and credentials are supplied. No destructive reset or financial transaction was performed.
