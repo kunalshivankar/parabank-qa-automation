@@ -38,7 +38,7 @@ ParaBank's public instance is shared. The database reset (`cleanDB` / `initializ
 | `npm run test:api` | Public, documented ParaBank API reads for customer/account/transaction validation | yes | no |
 | `npm run report:open` | Opens `reports/parabank-report.html` in your default browser | no | no |
 
-Every Playwright run writes the custom HTML report to `reports/parabank-report.html`.
+Runs using the project-configured reporter write the custom HTML report to `reports/parabank-report.html`. A CLI `--reporter` override replaces the configured reporter list and will not refresh this HTML report; omit that override when generating the submission report.
 
 ## Custom execution dashboard
 
