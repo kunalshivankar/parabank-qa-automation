@@ -1,212 +1,357 @@
-# parabank-qa-automation
+# ParaBank QA Automation
 
-Playwright + TypeScript automation framework for [ParaBank](https://parabank.parasoft.com).
+**UI and API Automation Framework using Playwright and TypeScript**
 
-The framework uses typed environment configuration and Playwright fixtures around a Page Object Model: page objects encapsulate locators and user actions, while tests own assertions. The API client and Zod schemas cover documented response validation separately from UI workflows.
+This project is part of a Senior QA Automation Engineer assessment. The objective was to build a maintainable automation framework for testing the ParaBank application and its APIs.
 
-> Status: **Phase 1 reporting, Phase 2A implementation, Phase 2B coverage, and Phase 2C API automation are in place**. The public sandbox remains
-> protected by explicit guardrails: no reset or write path is exercised without authorization. Phase 3 remains documentation and decision tracking only.
+The framework uses Playwright with TypeScript and follows the Page Object Model. It includes reusable page classes, API testing, test data generation, response validation, and a custom HTML report.
 
-## Requirements
+## Assessment Report
 
-- Node.js 20.12 or newer (uses the built-in `process.loadEnvFile`)
-- npm
+The HTML report provides an overview of test execution, phase-wise progress, test results, and available evidence.
 
-## Install
+**[View the Interactive QA Assessment Report](https://kunalshivankar.github.io/parabank-qa-automation/reports/parabank-report.html)**
 
-```bash
-npm install
-npx playwright install chromium
-cp .env.example .env        # optional; defaults are safe
+[![QA Assessment Report](reports/report-preview.png)](https://kunalshivankar.github.io/parabank-qa-automation/reports/parabank-report.html)
+
+## Project Overview
+
+The framework was developed with a focus on code reusability, maintainability, and clear test reporting.
+
+The main areas covered are:
+
+- UI automation using Playwright and TypeScript.
+- Page Object Model for managing page locators and actions.
+- API automation using Playwright APIRequestContext.
+- Response validation using Zod schemas.
+- Dynamic test data generation.
+- Currency calculations using integer values to avoid floating-point errors.
+- Custom HTML reporting.
+- Logging and sensitive-data handling.
+- Environment-based test configuration.
+
+## Technology Stack
+
+| Technology | Usage |
+|---|---|
+| TypeScript | Programming language |
+| Playwright | UI and API automation |
+| Node.js | Runtime environment |
+| Zod | API response validation |
+| ESLint | Code quality |
+| HTML, CSS, JavaScript | Custom test report |
+| Git and GitHub | Version control |
+| GitHub Pages | Hosting the assessment report |
+
+## Project Structure
+
+```text
+parabank-qa-automation/
+│
+├── api/                 API client and service methods
+├── config/              Environment configuration
+├── fixtures/            Shared Playwright fixtures
+├── pages/               Page Object classes
+├── reporters/           Custom HTML reporter
+├── scripts/             Report utility scripts
+├── test-data/           Test data generation
+├── tests/
+│   ├── api/             API test cases
+│   ├── reporter/        Report UI tests
+│   ├── ui/              UI test cases
+│   ├── unit/            Unit tests
+│   └── support/         Shared test utilities
+├── types/               TypeScript types and schemas
+├── utils/               Common utility functions
+│
+├── ASSESSMENT_TRACEABILITY.md
+├── DECISIONS.md
+├── FINAL_ASSESSMENT_REPORT.md
+├── TEST_EXECUTION_SUMMARY.md
+├── playwright.config.ts
+├── package.json
+└── README.md
 ```
 
-## Safety defaults for the shared sandbox
+## Prerequisites
 
-ParaBank's public instance is shared. The database reset (`cleanDB` / `initializeDB`) wipes data for every user.
+Before running the project, make sure the following are installed:
 
-- `PARABANK_ALLOW_GLOBAL_RESET` defaults to `false`.
-- No code path performs a reset unless that flag is explicitly set to `true`.
-- Workers default to `2` to avoid hammering the shared host.
+- Node.js 20.12 or newer
+- npm
+- Git
+- Chromium browser through Playwright
 
-## Commands
+## Installation
 
-| Command | What it does | Needs ParaBank? | Needs a browser? |
-|---|---|---|---|
-| `npm run typecheck` | TypeScript compile check | no | no |
-| `npm run lint` | ESLint, including the ban on `waitForTimeout` and `setTimeout` | no | no |
-| `npm run test:unit` | Unit tests for money parsing, config, data factory, redaction, reporter, and API deposit safety | no | no |
-| `npm run test:reporter` | Verifies the report's glass styling and accent colour via computed styles | no | yes (Chromium) |
-| `npm run test:ui` | Phase 2A registration/checking workflow plus gated Phase 2B transfer coverage and read-only provider inspection | yes | yes |
-| `npm run test:api` | Public, documented ParaBank API reads for customer/account/transaction validation | yes | no |
-| `npm run report:open` | Opens `reports/parabank-report.html` in your default browser | no | no |
+Clone the repository:
 
-Runs using the project-configured reporter write the custom HTML report to `reports/parabank-report.html`. A CLI `--reporter` override replaces the configured reporter list and will not refresh this HTML report; omit that override when generating the submission report.
+```powershell
+git clone https://github.com/kunalshivankar/parabank-qa-automation.git
 
-## Headless execution
+cd parabank-qa-automation
+```
 
-Playwright runs headless by default. Safe checks and the report-producing command used for the latest verified summary are:
+Install the dependencies:
 
-```bash
+```powershell
+npm.cmd install
+```
+
+Install the Playwright browser:
+
+```powershell
+npx.cmd playwright install chromium
+```
+
+Create the environment file if required:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+The project uses safe defaults when optional environment values are not provided.
+
+## Running the Tests
+
+The following commands can be executed from Windows PowerShell.
+
+| Command | Description |
+|---|---|
+| `npm.cmd run typecheck` | Checks TypeScript compilation |
+| `npm.cmd run lint` | Runs ESLint |
+| `npm.cmd run test:unit` | Runs unit tests |
+| `npm.cmd run test:reporter` | Tests the custom report in Chromium |
+| `npm.cmd run test:api` | Runs API tests |
+| `npm.cmd run test:ui` | Runs UI tests |
+| `npm.cmd run report:open` | Opens the generated HTML report |
+
+### Safe Test Execution
+
+For a safe report-producing run, use:
+
+```powershell
 npm.cmd run typecheck
+
 npm.cmd run lint
+
 npx.cmd playwright test --project=unit --project=reporter-ui --project=api --project=ui --grep-invert "automatic registration, login, and checking account workflow|manual registration, login, and checking account workflow|loan workflow uses the existing authorized provider only"
 ```
 
-The last command retains the configured HTML reporter. Global reset, loan, transfer, and API deposit authorization remain disabled by default; live registration/loan cases are excluded from this safe run.
+This command excludes the specified live registration and loan workflows while retaining the configured custom reporter.
 
-## Custom execution dashboard
+Do not override the configured reporter with a CLI `--reporter` option when generating the assessment report.
 
-The report is generated by `reporters/glassReporter.ts` and rendered by `reporters/template.ts`. It includes:
+The full test suite includes workflows that can interact with the public ParaBank application. Review the environment and safety settings before running those tests.
 
-The dashboard's accent color is `#F48031`, defined once in the report template and applied to headings, active tabs, and passing indicators.
+## Test Coverage
 
-- Overview cards for totals, status counts, pass/failure percentages, duration, screenshots, videos, and traces.
-- Tester and environment metadata from environment variables and the Playwright run.
-- Detailed test records with IDs, module, status, duration, timing, annotations, steps, logs, errors, and attachments.
-- Working Summary, Tests, and Failures tabs plus navigation for overview, status views, evidence, and logs.
-- Search and filters for test ID, name, module, status, priority, severity, browser, and test type.
-- Expand all, collapse all, and clear filters controls.
-- Failure-only reporting for failed and flaky tests.
-- Screenshot thumbnails for safe evidence, sanitized text diagnostics, and explicit withholding of raw traces or
-  sensitive registration evidence.
-- HTML escaping, attachment-path validation, and masking of sensitive log/error content.
+### Phase 1: Framework Setup and Reporting
 
-Unavailable runtime values are shown as `Not provided`; the report never invents tester, build, priority, severity, bug,
-API, or hybrid execution records.
+The framework and custom reporting system have been implemented and verified.
 
-## Evidence locations
+The reporter includes:
 
-- HTML report: `reports/parabank-report.html`
-- Requirement mapping: `ASSESSMENT_TRACEABILITY.md`
-- Final readiness report: `FINAL_ASSESSMENT_REPORT.md`
-- Exact execution evidence: `TEST_EXECUTION_SUMMARY.md`
-- Failure screenshots: `test-results/` (Playwright `only-on-failure`).
-- Raw videos and traces: disabled by default because they can contain form values and network payloads. Set
-  `PARABANK_RETAIN_RAW_ARTIFACTS=true` only in a private, authorized environment; never share or commit those files.
+- Overall execution summary.
+- Passed, failed, skipped, and flaky test counts.
+- Execution duration.
+- Phase-wise assessment status.
+- Test details and available attachments.
+- Search and filtering.
+- Summary, Tests, and Failures views.
+- Requirement traceability.
+- Environment and execution metadata.
 
-## Phase 2A: registration and loan orchestration
+The report uses a glassmorphism design with an orange accent color.
 
-The Phase 2A reset setup is separate from the business workflow. The reset setup uses the documented ParaBank
-`POST /services/bank/cleanDB` operation only when `PARABANK_ALLOW_GLOBAL_RESET=true`. The business tests do not reset
-the database or change global settings: they register and log in through the UI, open a checking account, retrieve its
-actual details, and validate the account type and balance.
+### Phase 2A: Registration, Account Creation, and Loan
 
-The loan test reads the existing Loan Provider without changing it. It remains blocked unless the provider is already
-Web Service and `PARABANK_ALLOW_LOAN_WORKFLOW=true` explicitly authorizes loan execution. Loan responses are validated
-as either Approved or Denied; approval is never assumed.
+This phase covers customer registration, login, checking-account creation, account details, and loan-related workflows.
 
-Automatic registration is the default and uses the existing run/worker-aware unique user factory. Manual registration
-uses `REGISTRATION_MODE=manual` plus every `MANUAL_*` variable in `.env.example`; the username must be unique and the
-password is never logged. Both modes use the same UI registration and subsequent account/loan workflow.
+Implemented areas include:
 
-Run it only against an owned or explicitly authorized ParaBank environment:
+- Registration form handling.
+- Registration request and response validation.
+- Dynamic user data generation.
+- Login and account page objects.
+- Checking-account workflow.
+- Loan provider inspection.
+- Safety checks for operations that can modify application data.
 
-```bash
-PARABANK_ALLOW_GLOBAL_RESET=true npm.cmd run test:ui
+**Current status:** Some parts are implemented and locally verified, but the complete live workflow remains unverified. Registration attempts in the public assessment environment returned duplicate-username validation responses. A later full run also encountered a timeout while locating the login username field.
+
+The project does not claim successful completion of the live account and loan workflow.
+
+### Phase 2B: Fund Transfers and Transaction History
+
+This phase covers the following required transfer amounts:
+
+| Transfer | Amount |
+|---|---:|
+| First transfer | $150.00 |
+| Second transfer | $25.50 |
+| Third transfer | $8.99 |
+| Total | $184.49 |
+
+Implemented areas include:
+
+- Source and destination account selection.
+- Transfer form handling.
+- Reusable transfer page methods.
+- Transaction history extraction.
+- Transaction ID and date lookup.
+- Empty-result handling.
+- Required-field validation.
+- Balance reconciliation.
+
+Currency calculations use integer cents to avoid floating-point precision issues.
+
+**Current status:** Page objects and offline tests have been verified. Live transfers were not performed because an authorized test account and permission to modify account balances were not available.
+
+### Phase 2C: API Automation
+
+The API framework uses a reusable API client and validates documented ParaBank responses.
+
+The covered operations include:
+
+- Customer login.
+- Customer details.
+- Customer account lookup.
+- Account details.
+- Transaction history.
+- Transaction lookup by amount.
+
+Zod schemas are used to validate customer, account, and transaction responses.
+
+Negative scenarios include invalid credentials, invalid customer IDs, malformed responses, and unsuccessful HTTP responses.
+
+**Current status:** Read-only API coverage has been verified. The complete create-user, deposit, and transaction-history scenario remains incomplete because the documented API contract does not provide a customer-creation endpoint. Deposit functionality has offline test coverage but was not executed against the live application.
+
+### Phase 3: Engineering Decisions
+
+The engineering decisions are documented in `DECISIONS.md`.
+
+The main topics include:
+
+- Managing shared application state during parallel execution.
+- Handling currency values accurately.
+- Deciding when to use UI automation and when to use API automation.
+- Protecting shared environments from unintended data changes.
+- Managing test credentials and execution evidence.
+
+## Test Execution Results
+
+The project has multiple execution records. The following results should be considered separately.
+
+### Previously verified safe execution
+
+The earlier safe report-producing run recorded:
+
+| Result | Count |
+|---|---:|
+| Total | 155 |
+| Passed | 152 |
+| Failed | 0 |
+| Skipped | 3 |
+
+Execution time: 36.2 seconds.
+
+The skipped tests were not counted as passed.
+
+### Later full-suite execution
+
+A subsequent full-suite run recorded:
+
+| Result | Count |
+|---|---:|
+| Total | 158 |
+| Passed | 152 |
+| Failed | 1 |
+| Skipped | 5 |
+
+The failure occurred in the Phase 2A registration and login workflow. Playwright timed out while waiting for the username input after navigating to the login page.
+
+This failure is documented and has not been presented as a successful test.
+
+TypeScript type checking and ESLint completed successfully in the recorded checks.
+
+For the latest execution details, refer to `TEST_EXECUTION_SUMMARY.md` and the interactive HTML report.
+
+## Custom HTML Report
+
+The custom report is generated using the following files:
+
+```text
+reporters/
+├── glassReporter.ts
+├── assessment.ts
+├── metadata.ts
+├── model.ts
+└── template.ts
 ```
 
-`PARABANK_ALLOW_GLOBAL_RESET=false` is the safe default. With the default, the Phase 2A test is skipped and never
-calls `cleanDB`. `PARABANK_ALLOW_LOAN_WORKFLOW=false` is also the safe default. The reset is global and can affect
-every user of the target sandbox, so it is not safe for the public shared instance without explicit authorization.
-Sensitive registration fields, including usernames, are redacted by the logger and reporter.
+The report is designed to make test results easier to review without going through terminal logs.
 
-### Verified Phase 2A status
+It provides an execution overview, test-level information, assessment progress, filters, and available evidence.
 
-- **PASS:** Registration request capture, submitted-field verification, response parsing, safety gates, and sensitive
-  data redaction are implemented and locally validated.
-- **BLOCKED:** Normal UI registration in the assessment environment. Four distinct usernames were submitted through
-  the registration UI; each `POST /parabank/register.htm` returned HTTP 200, and the server response rendered
-  `customer.username.errors` with `This username already exists.`.
-- **LATEST RETEST:** Three newly generated usernames were submitted; all three again returned HTTP 200 with the same
-  duplicate-username validation response.
-- **NOT VERIFIED:** Login, checking-account creation, and account details, because registration did not succeed.
+To open the report locally:
 
-The blocker evidence was inspected from the server response HTML and the local Playwright trace. Raw traces were not
-shared or committed because they contain request payloads; the current default keeps video and trace capture disabled.
-
-## Phase 2B: funds transfer and transaction validation
-
-Phase 2B uses the existing Page Object Model and integer-cent money utilities. It covers the required `$150.00`,
-`$25.50`, and `$8.99` transfers, source/destination account selection, confirmation text, balance reconciliation,
-and transaction-history parsing. The transfer workflow also includes an empty-amount validation path for authorized
-execution.
-
-Transfers mutate account balances and are therefore disabled by default. To run them, use an explicitly authorized
-test account and environment:
-
-```bash
-PARABANK_ALLOW_TRANSFER_WORKFLOW=true npm.cmd run test:ui -- tests/ui/phase2b-funds-transfer.spec.ts
+```powershell
+npm.cmd run report:open
 ```
 
-Required private environment values are `PARABANK_TRANSFER_USERNAME` and `PARABANK_TRANSFER_PASSWORD`. Credentials
-must never be hardcoded, logged, or committed. No database reset, initialization, or global setting change is used.
+The generated report is located at:
 
-Current Phase 2B status:
-
-- **PASS:** Phase 2B page objects, integer-cent calculation reuse, authorization gate, and safe blocked-path tests.
-- **PASS (offline):** Three stubbed UI tests validate source/destination selection, the three exact transfer amounts,
-  transaction row extraction, and the `$184.49` cents reconciliation. No ParaBank transfer was sent.
-- **BLOCKED:** Live transfer execution is not authorized in this workspace and no transfer credentials were supplied.
-- **NOT VERIFIED:** Actual transfers, account balance changes, transaction history, and application-specific empty/invalid
-  account responses.
-
-### Verified local execution results
-
-The latest HTML report was generated by the configured custom reporter on all safe project tests:
-
-- 128 total records: `125 passed`, `0 failed`, `3 skipped`; pass rate is 100% among executed tests. Skips are not counted as passes.
-- Breakdown: 107 unit, 11 reporter UI, 4 read-only API, and 3 offline UI tests passed; the reset setup and 2 live transfer tests were skipped under safe defaults.
-- The three live Phase 2A registration/loan cases were excluded from the final safe run; a separate retest attempted registration and received the duplicate-username response on all 3 submissions.
-
-Safe read-only API validation uses the documented public `john/demo` sample account and the ParaBank OpenAPI contract. The live transaction list is validated only through documented GET endpoints; no write or reset calls are made. Phase 3 remains documentation and decision tracking only.
-
-## Phase 2C: ParaBank API automation
-
-Phase 2C has a reusable `ParaBankApiClient` and XML response parsing for documented API endpoints. The current API test suite validates the safe, read-only contract for:
-
-- `GET /services/bank/login/{username}/{password}`
-- `GET /services/bank/customers/{customerId}/accounts`
-- `GET /services/bank/accounts/{accountId}`
-- `GET /services/bank/accounts/{accountId}/transactions`
-- `GET /services/bank/accounts/{accountId}/transactions/amount/{amount}`
-
-The API layer uses Zod schemas to validate customer, account, and transaction payloads and it asserts that invalid credentials fail closed without modifying shared state. The 4 passing API tests cover read-only operations; they do not prove the full create-user/deposit/history scenario.
-
-The OpenAPI contract does not define a customer-create or registration operation. It does define `POST /services/bank/deposit`, which is available in the client only when `PARABANK_ALLOW_API_DEPOSIT=true` and `PARABANK_API_DEPOSIT_ACCOUNT_ID` matches the exact account being changed. Both configuration values are disabled/unset by default. The deposit method is covered with stubbed offline tests only; no live deposit was authorized or executed. Therefore the required API sequence of creating a user, depositing funds, and validating that user's transaction history remains incomplete.
-
-### Verified local execution results
-
-- `npx playwright test --project=api --reporter=line` → `4 passed` in the prior standalone API run; the latest consolidated report also contains 4 passing API tests.
-- `npm run typecheck` → success
-- `npm run lint` → success
-
-## Phase 3: engineering decisions and final audit
-
-Phase 3 documentation is intentionally limited to the authoritative guidance needed for the assessment: safe-sandbox guardrails, credential handling, report retention, and the documented blocked-path rationale when an environment is not explicitly authorized.
-
-## Troubleshooting
-
-- If the report is missing, run `npm.cmd run test` and check `reports/parabank-report.html`.
-- If a video or trace link is unavailable, confirm its file still exists under `test-results/`.
-- If tester fields show `Not provided`, set the corresponding environment variables before execution.
-- Keep `PARABANK_ALLOW_GLOBAL_RESET=false` unless the target environment is owned or explicitly authorized. A skipped
-  Phase 2A test is an intentional safety result, not a successful business-workflow execution.
-
-## Project layout
-
-```
-tests/        unit/ reporter/ ui/ api/ support/
-pages/        page objects (locators and actions only, no assertions)
-api/          API clients (Phase 2)
-fixtures/     Playwright fixtures: appConfig, log, newUser
-test-data/    dynamic user generation
-types/        API interfaces and Zod response schemas
-utils/        money (integer cents), redact, logger, url
-config/       typed environment loading and validation
-reporters/    custom glassmorphism reporter
-scripts/      cross-platform report opener
+```text
+reports/parabank-report.html
 ```
 
-## Environment variables
+The hosted version is available here:
 
-See `.env.example`. Invalid values fail fast with a message naming the variable.
+[Open Assessment Report](https://kunalshivankar.github.io/parabank-qa-automation/reports/parabank-report.html)
+
+## Safety and Environment Configuration
+
+ParaBank's public environment is shared. Operations such as database reset, transfers, and deposits can affect application data.
+
+For that reason, write operations are disabled by default.
+
+```text
+PARABANK_ALLOW_GLOBAL_RESET=false
+PARABANK_ALLOW_LOAN_WORKFLOW=false
+PARABANK_ALLOW_TRANSFER_WORKFLOW=false
+PARABANK_ALLOW_API_DEPOSIT=false
+```
+
+Live write workflows should only be executed against an owned or explicitly authorized environment.
+
+Credentials must be stored in environment variables and must never be hardcoded or committed to the repository.
+
+## Assessment Documents
+
+The repository contains additional documents for reviewing the implementation and results.
+
+| File | Description |
+|---|---|
+| `ASSESSMENT_TRACEABILITY.md` | Maps assessment requirements to implementation and evidence |
+| `DECISIONS.md` | Explains the main engineering decisions |
+| `FINAL_ASSESSMENT_REPORT.md` | Summarizes assessment readiness |
+| `TEST_EXECUTION_SUMMARY.md` | Records test execution results |
+
+## Repository Links
+
+**GitHub Repository**
+
+[https://github.com/kunalshivankar/parabank-qa-automation](https://github.com/kunalshivankar/parabank-qa-automation)
+
+**Interactive Assessment Report**
+
+[https://kunalshivankar.github.io/parabank-qa-automation/reports/parabank-report.html](https://kunalshivankar.github.io/parabank-qa-automation/reports/parabank-report.html)
+
+---
+
+## Final Note
+
+The main objective of this project was to build a reusable and maintainable automation framework rather than a collection of independent test scripts.
+
+The implementation covers UI automation, API validation, test data management, reporting, and execution safety. Any scenario that could not be verified against the live application is documented separately so that the assessment results remain accurate and transparent.
